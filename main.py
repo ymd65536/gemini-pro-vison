@@ -1,10 +1,10 @@
+from google.cloud import storage
 import vertexai
 from vertexai.preview.generative_models import GenerativeModel, Part
 from vertexai.preview.language_models import TextGenerationModel
 
 project_id = "project_id"
 bucket_name = "bucket_name"
-file_name = f"gs://{bucket_name}/my_email.png".format(bucket_name=bucket_name)
 
 
 def generate(image: Part):
@@ -19,14 +19,6 @@ def generate(image: Part):
         }
     )
 
-    return responses
-
-
-if __name__ == "__main__":
-    image_part = Part.from_uri(
-        file_name, mime_type="image/png")
-
-    responses = generate(image_part)
     if responses.candidates:
         response_text = responses.candidates[0].text
 
@@ -53,3 +45,18 @@ if __name__ == "__main__":
 
     else:
         print("No response")
+
+
+def list_blobs(bucket_name):
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blobs = client.list_blobs(bucket)
+    return blobs
+
+
+if __name__ == "__main__":
+
+    for blob in list_blobs(bucket_name):
+        gcs_file_name = f"gs://{bucket_name}/{blob.name}"
+        generate(Part.from_uri(
+            gcs_file_name, mime_type="image/png"))
